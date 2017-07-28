@@ -21,7 +21,7 @@ responsiveObj.cookieArray = [1,2,3];
 const currentDay = getCurrentDay();
 
 // 每天早上 6 点刷新登录信息
-schedule.scheduleJob('* 6 * * *', function() {
+schedule.scheduleJob('00 6 * * *', function() {
 	freshLoginInfo();
 });
 
@@ -130,12 +130,12 @@ function freshLoginInfo() {
     HttpInstance.get('http://127.0.0.1:3000/login/refresh')
         .then(res => {
         	// 记住 cookie
-        	let cur = [];
-        	res.headers['set-cookie'].forEach(item => {
-        		cur.push(item.split(';')[0]);
-        	});
-        	responsiveObj.cookieArray = cur;
-        	fs.writeFile('./.cookie', JSON.stringify(cur), 'utf-8', () => {});
+        	// let cur = [];
+        	// res.headers['set-cookie'].forEach(item => {
+        	// 	cur.push(item.split(';')[0]);
+        	// });
+        	// responsiveObj.cookieArray = cur;
+        	// fs.writeFile('./.cookie', JSON.stringify(cur), 'utf-8', () => {});
         });
 }
 
