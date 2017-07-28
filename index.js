@@ -110,7 +110,7 @@ function loginNetease() {
                 resolve();
             }))
         } else {
-            HttpInstance.get(`http://127.0.0.1:3000/login/cellphone?phone=18005246366&password=${config.password}`)
+            HttpInstance.get(`http://127.0.0.1:3000/login/cellphone?phone=${config.phone}&password=${config.password}`)
                 .then(res => {
                     // 记住 cookie
                     let cur = [];
