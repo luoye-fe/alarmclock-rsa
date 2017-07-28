@@ -118,7 +118,7 @@ function loginNetease() {
                     	cur.push(item.split(';')[0]);
                     });
                     responsiveObj.cookieArray = cur;
-                    fs.writeFile('./.cookie', JSON.stringify(responsiveObj.cookieArray), 'utf-8');
+                    fs.writeFile('./.cookie', JSON.stringify(cur), 'utf-8', () => {});
                     resolve();
                 })
                 .catch(e => reject(e))
@@ -135,7 +135,7 @@ function freshLoginInfo() {
         		cur.push(item.split(';')[0]);
         	});
         	responsiveObj.cookieArray = cur;
-        	fs.writeFile('./.cookie', JSON.stringify(responsiveObj.cookieArray), 'utf-8');
+        	fs.writeFile('./.cookie', JSON.stringify(cur), 'utf-8', () => {});
         });
 }
 
