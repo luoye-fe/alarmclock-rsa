@@ -1,0 +1,25 @@
+{
+  "name": "alarmclock-rsa",
+  "version": "1.0.0",
+  "description": "树莓派工作日闹钟 =====================",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luoye-fe/alarmclock-rsa.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/luoye-fe/alarmclock-rsa/issues"
+  },
+  "homepage": "https://github.com/luoye-fe/alarmclock-rsa#readme",
+  "dependencies": {
+    "axios": "^0.16.2",
+    "node-schedule": "^1.2.3",
+    "time": "^0.12.0"
+  }
+}
