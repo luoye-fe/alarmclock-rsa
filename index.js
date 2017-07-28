@@ -21,15 +21,15 @@ responsiveObj.cookieArray = [1,2,3];
 const currentDay = getCurrentDay();
 
 // 每天早上 6 点刷新登录信息
-schedule.scheduleJob('* * 22 * * *', function() {
+schedule.scheduleJob('* 6 * * *', function() {
 	freshLoginInfo();
 });
 
 // 登录
 loginNetease()
     .then(() => {
-        // 每天 23 点运行，东八区正好 7 点
-        schedule.scheduleJob('* * 23 * * *', function() {
+        // 6.55 闹钟
+        schedule.scheduleJob('55 6 * * *', function() {
         	return init();
         });
     })
@@ -151,7 +151,6 @@ function getTargetMusicUrl() {
                 return HttpInstance.get(`http://127.0.0.1:3000/music/url?id=${songID}`)
             })
             .then(res => {
-            	console.log(res)
                 resolve(res.data.data[0].url);
             })
             .catch(e => reject(e));
