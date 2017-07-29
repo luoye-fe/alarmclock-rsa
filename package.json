@@ -19,6 +19,7 @@
   "homepage": "https://github.com/luoye-fe/alarmclock-rsa#readme",
   "dependencies": {
     "axios": "^0.16.2",
+    "chalk": "^2.0.1",
     "node-schedule": "^1.2.3"
   }
 }

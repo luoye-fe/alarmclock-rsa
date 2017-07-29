@@ -3,6 +3,7 @@ const { exec } = require('child_process');
 
 const axios = require('axios');
 const schedule = require('node-schedule');
+const { log, warn } = require('./logger.js');
 
 const config = require('./config.json');
 
@@ -34,7 +35,7 @@ loginNetease()
         });
     })
     .catch(e => {
-    	console.log(e);
+    	log(e);
     })
 
 function init() {
@@ -55,13 +56,13 @@ function init() {
 		    .then(res => {
 		        // 百度日历节假日没生成
 		        if (!res.data.data[0].holiday) {
-		        	console.warn('节假日还未生成');
+		        	warn('节假日还未生成');
 		        	return reject('节假日还未生成');
 		        };
 
 		        // 节假日 不闹钟
 		        if (isHoliday(currentDay, res.data.data[0].holiday)) {
-		        	console.log('节假日');
+		        	warn('节假日');
 		        	return reject('节假日');
 		        };
 
@@ -69,7 +70,7 @@ function init() {
 		        return getTargetMusicUrl();
 		    })
 		    .then(url => {
-		    	console.log(url);
+		    	log(url);
 		    	exec(`mpg123 "${url}"`);
 		    })
 		    .catch(e => reject(e))
@@ -144,7 +145,7 @@ function getTargetMusicUrl() {
         HttpInstance.get('http://127.0.0.1:3000/recommend/songs')
             .then(res => {
             	let song = res.data.recommend[(Math.random() * res.data.recommend.length).toFixed(0)];
-            	console.log(`${song.name} -- ${song.artists[0].name}`);
+            	log(`${song.name} -- ${song.artists[0].name}`);
                 return song.id;
             })
             .then(songID => {
