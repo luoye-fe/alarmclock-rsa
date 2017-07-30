@@ -7,23 +7,22 @@ const { log, warn } = require('./logger.js');
 
 const config = require('./config.json');
 
-const LOCATION = '杭州';
-
 const HttpInstance = axios.create();
 
 let responsiveObj = {
-	cookieArray: [],
-	set cookieArray(val) {
-		HttpInstance.defaults.headers.Cookie = val.join(';');
-		return val;
-	}
+    cookieArray: [],
+    set cookieArray(val) {
+        // 自动带上 cookie
+        HttpInstance.defaults.headers.Cookie = val.join(';');
+        return val;
+    }
 }
-responsiveObj.cookieArray = [1,2,3];
-const currentDay = getCurrentDay();
+responsiveObj.cookieArray = [1, 2, 3];
+let currentDay = null;
 
 // 每天早上 6 点刷新登录信息
 schedule.scheduleJob('00 6 * * *', function() {
-	freshLoginInfo();
+    freshLoginInfo();
 });
 
 // 登录
@@ -31,50 +30,47 @@ loginNetease()
     .then(() => {
         // 6.55 闹钟
         schedule.scheduleJob('55 6 * * *', function() {
-        	return init();
+            init();
         });
     })
-    .catch(e => {
-    	log(e);
-    })
+    .catch(e => log(e));
 
 function init() {
-	return new Promise((resolve, reject) => {
-		HttpInstance.get('https://sp0.baidu.com/8aQDcjqpAAV3otqbppnN2DJv/api.php', {
-		        params: {
-		            query: currentDay,
-		            co: '',
-		            resource_id: 6018,
-		            t: 1501204821784,
-		            ie: 'utf8',
-		            oe: 'utf8',
-		            format: 'json',
-		            tn: 'baidu',
-		            _: 1501204649953
-		        }
-		    })
-		    .then(res => {
-		        // 百度日历节假日没生成
-		        if (!res.data.data[0].holiday) {
-		        	warn('节假日还未生成');
-		        	return reject('节假日还未生成');
-		        };
+    currentDay = getCurrentDay();
+    HttpInstance.get('https://sp0.baidu.com/8aQDcjqpAAV3otqbppnN2DJv/api.php', {
+            params: {
+                query: currentDay,
+                co: '',
+                resource_id: 6018,
+                t: Date.now(),
+                ie: 'utf8',
+                oe: 'utf8',
+                format: 'json',
+                tn: 'baidu',
+                _: Date.now()
+            }
+        })
+        .then(res => {
+            // 百度日历节假日没生成
+            if (!res.data.data[0].holiday) {
+                return log('节假日还未生成');
+            };
 
-		        // 节假日 不闹钟
-		        if (isHoliday(currentDay, res.data.data[0].holiday)) {
-		        	warn('节假日');
-		        	return reject('节假日');
-		        };
+            // 节假日 不闹钟
+            if (isHoliday(currentDay, res.data.data[0].holiday)) {
+                return log('今天是节假日，君请休息');
+            };
 
-		        // 正常闹钟 获取网易云音乐每日推荐歌单的随机一首
-		        return getTargetMusicUrl();
-		    })
-		    .then(url => {
-		    	log(url);
-		    	exec(`mpg123 "${url}"`);
-		    })
-		    .catch(e => reject(e))
-	});
+            // 正常闹钟 获取网易云音乐每日推荐歌单的随机一首
+            return getTargetMusicUrl();
+        })
+        .then(url => {
+            if (url) {
+                log(url);
+                exec(`mpg123 "${url}"`);
+            }
+        })
+        .catch(e => warn(e))
 }
 
 function getCurrentDay() {
@@ -83,7 +79,7 @@ function getCurrentDay() {
     return now.split(' ')[0];
 }
 
-function isHoliday(currentDay, holidayList) {
+function isHoliday(day, holidayList) {
     // 节假日日期
     let holidayResult = [];
     // 周末需上班日期
@@ -97,8 +93,8 @@ function isHoliday(currentDay, holidayList) {
             }
         })
     });
-    if (holidayResult.indexOf(currentDay) > -1) return true;
-    if ((new Date(currentDay).getDay() === 6 || new Date(currentDay).getDay() === 7) && weekEndButWork.indexOf(currentDay) === -1) return true;
+    if (holidayResult.indexOf(day) > -1) return true;
+    if ((new Date(day).getDay() === 6 || new Date(day).getDay() === 0) && weekEndButWork.indexOf(day) === -1) return true;
     return false;
 }
 
@@ -116,7 +112,7 @@ function loginNetease() {
                     // 记住 cookie
                     let cur = [];
                     res.headers['set-cookie'].forEach(item => {
-                    	cur.push(item.split(';')[0]);
+                        cur.push(item.split(';')[0]);
                     });
                     responsiveObj.cookieArray = cur;
                     fs.writeFile('./.cookie', JSON.stringify(cur), 'utf-8', () => {});
@@ -130,13 +126,8 @@ function loginNetease() {
 function freshLoginInfo() {
     HttpInstance.get('http://127.0.0.1:3000/login/refresh')
         .then(res => {
-        	// 记住 cookie
-        	// let cur = [];
-        	// res.headers['set-cookie'].forEach(item => {
-        	// 	cur.push(item.split(';')[0]);
-        	// });
-        	// responsiveObj.cookieArray = cur;
-        	// fs.writeFile('./.cookie', JSON.stringify(cur), 'utf-8', () => {});
+            // 刷新登录信息
+            log('刷新登录信息成功');
         });
 }
 
@@ -144,8 +135,8 @@ function getTargetMusicUrl() {
     return new Promise((resolve, reject) => {
         HttpInstance.get('http://127.0.0.1:3000/recommend/songs')
             .then(res => {
-            	let song = res.data.recommend[(Math.random() * res.data.recommend.length).toFixed(0)];
-            	log(`${song.name} -- ${song.artists[0].name}`);
+                let song = res.data.recommend[(Math.random() * res.data.recommend.length).toFixed(0)];
+                log(`当前播放: ${song.name} -- ${song.artists[0].name}`);
                 return song.id;
             })
             .then(songID => {
