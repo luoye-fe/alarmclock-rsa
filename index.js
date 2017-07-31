@@ -1,13 +1,55 @@
 const fs = require('fs');
-const { exec } = require('child_process');
 
 const axios = require('axios');
 const schedule = require('node-schedule');
+const mpg123 = require('mpg123');
 const { log, warn } = require('./logger.js');
 
 const config = require('./config.json');
 
 const HttpInstance = axios.create();
+const Player = new mpg123.MpgPlayer();
+
+
+Player.on('format', data => {
+    fadeEffect();
+})
+function fadeEffect() {
+    let fadeSecond = 10;
+    let count = 0;
+    let length = Player.length;
+    let MinP = (fadeSecond / length).toFixed(4);
+    let MaxP = ((length - fadeSecond) / length).toFixed(4);
+    Player.volume(0);
+    poll();
+    function poll() {
+        Player.getProgress(p => {
+            p = p.toFixed(4);
+            if (p >= 100) return;
+            Player.volume(count);
+            if (p < MinP) {
+                count = (p / MinP * 100).toFixed(4);
+            } else if (p > MaxP){
+                count = (100 - MaxP / p * 100).toFixed(4);
+            }
+            console.log(p ,count)
+            setTimeout(() => {
+                poll();
+            }, 200)
+
+
+            // if (count > 50) return;
+            // Player.volume(count * 2);
+            // setTimeout(() => {
+            //     count++;
+            //     poll();
+            // }, 200)
+        })
+    }
+}
+
+Player.play('http://m10.music.126.net/20170731124121/11399214a6c757d49968ec142b3b2e1a/ymusic/35e8/22de/2dcd/3d2ccb1bd197e23827a6953af6297eab.mp3');
+// Player.volume(20)
 
 let responsiveObj = {
     cookieArray: [],
@@ -20,20 +62,20 @@ let responsiveObj = {
 responsiveObj.cookieArray = [1, 2, 3];
 let currentDay = null;
 
-// 每天早上 6 点刷新登录信息
-schedule.scheduleJob('00 6 * * *', function() {
-    freshLoginInfo();
-});
+// // 每天早上 6 点刷新登录信息
+// schedule.scheduleJob('00 6 * * *', function() {
+//     freshLoginInfo();
+// });
 
-// 登录
-loginNetease()
-    .then(() => {
-        // 6.55 闹钟
-        schedule.scheduleJob('55 6 * * *', function() {
-            init();
-        });
-    })
-    .catch(e => log(e));
+// // 登录
+// loginNetease()
+//     .then(() => {
+//         // 6.55 闹钟
+//         schedule.scheduleJob('55 6 * * *', function() {
+//             init();
+//         });
+//     })
+//     .catch(e => log(e));
 
 function init() {
     currentDay = getCurrentDay();
@@ -67,7 +109,7 @@ function init() {
         .then(url => {
             if (url) {
                 log(url);
-                exec(`mpg123 "${url}"`);
+                Player.play(url);
             }
         })
         .catch(e => warn(e))
