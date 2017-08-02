@@ -3,7 +3,7 @@ const fs = require('fs');
 const axios = require('axios');
 const schedule = require('node-schedule');
 const mpg123 = require('mpg123');
-const { log, warn } = require('./logger.js');
+const { log, warn, error } = require('./logger.js');
 
 const config = require('./config.json');
 
@@ -13,6 +13,20 @@ const Player = new mpg123.MpgPlayer();
 Player.on('format', data => {
     fadeEffect();
 })
+Player.on('error', e => {
+    error(e);
+    log('播放出错，播放本地音乐保证闹钟可用');
+    Player.stop();
+    Player.play('./back.mp3');
+})
+
+process.on('uncaughtException', e => {
+    error(e);
+    log('进程出错，播放本地音乐保证闹钟可用');
+    Player.stop();
+    Player.play('./back.mp3');
+})
+
 function fadeEffect() {
     let count = 0;
     Player.volume(0);
@@ -51,7 +65,7 @@ loginNetease()
             init();
         });
     })
-    .catch(e => log(e));
+    .catch(e => error(e));
 
 function init() {
     currentDay = getCurrentDay();
@@ -88,7 +102,7 @@ function init() {
                 Player.play(url);
             }
         })
-        .catch(e => warn(e))
+        .catch(e => error(e))
 }
 
 function getCurrentDay() {
