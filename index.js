@@ -106,9 +106,9 @@ function init() {
 }
 
 function getCurrentDay() {
-    const now = new Date().toLocaleString();
+    const now = new Date().toLocaleString('en');
     const curArray = now.split(',')[0].split('/');
-    return `${curArray[2]}年${curArray[1]}月${curArray[0]}日`;
+    return `${curArray[2]}-${curArray[0]}-${curArray[1]}`;
 }
 
 function isHoliday(day, holidayList) {
