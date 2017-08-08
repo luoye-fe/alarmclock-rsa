@@ -1,3 +1,6 @@
 config.json
 .cookie
 node_modules/
+mp3/*
+!.gitkeep
+!mp3/back.mp3

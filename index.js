@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { exec, spawn } = require('child_process');
 
 const axios = require('axios');
 const schedule = require('node-schedule');
@@ -8,38 +9,13 @@ const { log, warn, error } = require('./logger.js');
 const config = require('./config.json');
 
 const HttpInstance = axios.create();
-const Player = new mpg123.MpgPlayer();
 
-Player.on('format', data => {
-    fadeEffect();
-})
-Player.on('error', e => {
-    error(e);
-    log('播放出错，播放本地音乐保证闹钟可用');
-    Player.stop();
-    Player.play('./back.mp3');
-})
+let fileList = ['back.mp3']; // mp3 目录下的备用音乐
 
 process.on('uncaughtException', e => {
-    error(e);
-    log('进程出错，播放本地音乐保证闹钟可用');
-    Player.stop();
-    Player.play('./back.mp3');
+    log('进程出错，随机播放本地音乐保证闹钟可用');
+    exec(`mpg123 ./mp3/${getRandomValFromArray(fileList)}`);
 })
-
-function fadeEffect() {
-    let count = 0;
-    Player.volume(0);
-    poll();
-    function poll() {
-        if (count > 50) return;
-        Player.volume(count * 2);
-        setTimeout(() => {
-            count++;
-            poll();
-        }, 200)
-    }
-}
 
 let responsiveObj = {
     cookieArray: [],
@@ -49,7 +25,7 @@ let responsiveObj = {
         return val;
     }
 }
-responsiveObj.cookieArray = [1, 2, 3];
+
 let currentDay = null;
 
 // 每天早上 6 点刷新登录信息
@@ -68,6 +44,11 @@ loginNetease()
     .catch(e => error(e));
 
 function init() {
+
+    fs.readdir('./mp3', (err, files) => {
+        fileList = fileList.concat(files.filter(item => /\.mp3$/.test(item)));
+    })
+
     currentDay = getCurrentDay();
     HttpInstance.get('https://sp0.baidu.com/8aQDcjqpAAV3otqbppnN2DJv/api.php', {
             params: {
@@ -98,8 +79,19 @@ function init() {
         })
         .then(url => {
             if (url) {
-                log(url);
-                Player.play(url);
+                const child = spawn('mpg123', [url]);
+
+                // 下载音乐 备用
+                exec('wget -P ./mp3 ' + url);
+                child.stderr.on('data', (data) => {});
+                child.on('close', (code) => {
+                    if (code === 0) {
+                        // 播放出错了
+                        child.kill();
+                        log('播放出错，随机播放本地音乐保证闹钟可用');
+                        exec(`mpg123 ./mp3/${getRandomValFromArray(fileList)}`);
+                    }
+                })
             }
         })
         .catch(e => error(e))
@@ -179,4 +171,8 @@ function getTargetMusicUrl() {
             })
             .catch(e => reject(e));
     })
+}
+
+function getRandomValFromArray(arr) {
+    return arr[Math.floor(Math.random() * (arr.length + 1))]
 }
